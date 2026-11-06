@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   const audienceOptions = ["absolute_beginner", "beginner", "intermediate", "business", "children"];
   const templateOptions = ["A_55s", "B_35s"];
   const styleOptions = ["cute", "professional", "casual"];
@@ -46,11 +47,11 @@
           <form id="topic-intake-form" class="grid-2">
             <div class="field-group">
               <label for="topic-cn">主题（中文）</label>
-              <input id="topic-cn" name="topic_cn" placeholder="例如：谢谢" value="${current?.topic_cn || ""}" />
+              <input id="topic-cn" name="topic_cn" placeholder="例如：谢谢" value="${escapeHtml(current?.topic_cn || "")}" />
             </div>
             <div class="field-group">
               <label for="topic-en">主题（英文）</label>
-              <input id="topic-en" name="topic_en" placeholder="例如：Thank You" value="${current?.topic_en || ""}" />
+              <input id="topic-en" name="topic_en" placeholder="例如：Thank You" value="${escapeHtml(current?.topic_en || "")}" />
             </div>
             <div class="field-group">
               <label for="audience">目标人群</label>
@@ -66,11 +67,11 @@
             </div>
             <div class="field-group">
               <label for="series-tag">系列标签</label>
-              <input id="series-tag" name="series_tag" placeholder="例如：DailyMandarin" value="${current?.series_tag || "DailyMandarin"}" />
+              <input id="series-tag" name="series_tag" placeholder="例如：DailyMandarin" value="${escapeHtml(current?.series_tag || "DailyMandarin")}" />
             </div>
             <div class="field-group" style="grid-column: 1 / -1;">
               <label for="seo-keywords">SEO 关键词</label>
-              <textarea id="seo-keywords" name="seo_keywords" placeholder="逗号分隔，例如：learn chinese thank you, xiexie">${current?.seo?.tags?.join(", ") || ""}</textarea>
+              <textarea id="seo-keywords" name="seo_keywords" placeholder="逗号分隔，例如：learn chinese thank you, xiexie">${escapeHtml(current?.seo?.tags?.join(", ") || "")}</textarea>
             </div>
             <div class="button-row" style="grid-column: 1 / -1;">
               <button class="primary-button" type="submit">Generate Project</button>
@@ -83,7 +84,7 @@
           <div class="stat-grid">
             <div class="stat-card">
               <span class="muted">Projected Project ID</span>
-              <strong id="project-id-preview">${current?.project_id || "未生成"}</strong>
+              <strong id="project-id-preview">${escapeHtml(current?.project_id || "未生成")}</strong>
             </div>
             <div class="stat-card">
               <span class="muted">Shot Count</span>
@@ -91,7 +92,7 @@
             </div>
             <div class="stat-card">
               <span class="muted">Template</span>
-              <strong id="template-preview">${current?.template_type || "A_55s"}</strong>
+              <strong id="template-preview">${escapeHtml(current?.template_type || "A_55s")}</strong>
             </div>
           </div>
 

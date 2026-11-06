@@ -74,6 +74,33 @@
       .slice(0, 30);
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
+  }
+
+  function validateProjectId(value) {
+    if (typeof value !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}$/.test(value)
+        || ["constructor", "prototype", "__proto__"].includes(value)) {
+      throw new Error("Invalid project_id: use letters, digits, underscores or hyphens.");
+    }
+    return value;
+  }
+
+  function validateImport(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new Error("Import must be a JSON object.");
+    }
+    if (value.shots !== undefined && (!Array.isArray(value.shots)
+        || value.shots.some((shot) => !shot || typeof shot !== "object" || Array.isArray(shot)))) {
+      throw new Error("shots must contain objects.");
+    }
+    if (value.seo?.tags !== undefined && !Array.isArray(value.seo.tags)) {
+      throw new Error("seo.tags must be an array.");
+    }
+  }
+
   function generateProjectId(topicEn) {
     const date = new Date();
     const y = date.getFullYear();
@@ -107,6 +134,8 @@
   }
 
   function ensureProjectShape(project) {
+    validateImport(project);
+    validateProjectId(project.project_id);
     const safeProject = { ...project };
     safeProject.shots = Array.isArray(safeProject.shots) ? safeProject.shots : [];
     safeProject.seo = safeProject.seo || { title: "", description: "", tags: [] };
@@ -142,6 +171,7 @@
   }
 
   function mergeProjectPatch(projectId, patch) {
+    validateProjectId(projectId);
     const existing = window.AppState.projects[projectId] || { project_id: projectId };
     window.AppState.projects[projectId] = ensureProjectShape({
       ...existing,
@@ -154,6 +184,7 @@
   }
 
   function importScriptObject(scriptData) {
+    validateImport(scriptData);
     const projectId = scriptData.project_id || generateProjectId(scriptData.topic_en || scriptData.topic || "imported_topic");
     const project = {
       project_id: projectId,
@@ -171,7 +202,9 @@
   }
 
   function importManifestObject(manifestData) {
+    validateImport(manifestData);
     const projectId = manifestData.project_id || window.AppState.currentProjectId || generateProjectId("imported_manifest");
+    validateProjectId(projectId);
     const existing = window.AppState.projects[projectId] || {
       project_id: projectId,
       shots: []
@@ -272,6 +305,7 @@
   window.AppState = loadState();
   window.ConsoleModules = window.ConsoleModules || {};
   window.ConsoleApp = {
+    escapeHtml,
     saveState,
     renderAll,
     getCurrentProject,

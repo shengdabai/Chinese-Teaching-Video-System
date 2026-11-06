@@ -17,6 +17,7 @@ AI中文教学视频 — 项目生成器
 import csv
 import json
 import os
+import re
 import shutil
 from datetime import datetime
 
@@ -35,11 +36,18 @@ def main():
     seo_keywords = input("SEO关键词（逗号分隔）: ").strip()
 
     date_str = datetime.now().strftime("%Y%m%d")
-    topic_slug = topic_en.lower().replace(" ", "_").replace('"', "").replace("'", "")[:30]
+    topic_slug = re.sub(r"[^a-z0-9]+", "_", topic_en.lower()).strip("_")[:30]
+    if not topic_cn or not topic_slug:
+        raise SystemExit("❌ 请填写中文主题和包含英文字母或数字的英文主题")
+    if template not in ("A_55s", "B_35s"):
+        raise SystemExit("❌ 模板必须为 A_55s 或 B_35s")
     project_id = f"{date_str}_{topic_slug}"
 
     project_dir = os.path.join("projects", project_id)
-    os.makedirs(project_dir, exist_ok=True)
+    try:
+        os.makedirs(project_dir, exist_ok=False)
+    except FileExistsError:
+        raise SystemExit(f"❌ 项目已存在，未覆盖任何文件: {project_dir}") from None
     for subdir in ["raw_clips", "normalized", "keyframes", "output", "logs"]:
         subdir_path = os.path.join(project_dir, subdir)
         os.makedirs(subdir_path, exist_ok=True)

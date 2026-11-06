@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   function renderChecklist(items) {
     return items
       .map((item, index) => {
@@ -6,7 +7,7 @@
           <div class="check-item">
             <label>
               <input type="checkbox" data-check-index="${index}" ${item.done ? "checked" : ""} />
-              <span style="margin-left: 10px;">${item.label}</span>
+              <span style="margin-left: 10px;">${escapeHtml(item.label)}</span>
             </label>
             <span class="project-pill">${item.done ? "Done" : "Pending"}</span>
           </div>
@@ -23,8 +24,8 @@
       .map((item, index) => {
         return `
           <div class="calendar-item">
-            <strong>${item.date}</strong>
-            <p class="muted">状态：${item.status}</p>
+            <strong>${escapeHtml(item.date)}</strong>
+            <p class="muted">状态：${escapeHtml(item.status)}</p>
             <button class="mini-button" data-toggle-calendar="${index}" type="button">切换已发布/待发布</button>
           </div>
         `;
@@ -59,21 +60,21 @@
                       <strong>Title</strong>
                       <button class="mini-button" data-copy-seo="title" type="button">Copy</button>
                     </div>
-                    <div class="preview-box">${seo.title || "未填写标题"}</div>
+                    <div class="preview-box">${escapeHtml(seo.title || "未填写标题")}</div>
                   </div>
                   <div class="prompt-card">
                     <div class="module-header">
                       <strong>Description</strong>
                       <button class="mini-button" data-copy-seo="description" type="button">Copy</button>
                     </div>
-                    <div class="preview-box">${seo.description || "未填写描述"}</div>
+                    <div class="preview-box">${escapeHtml(seo.description || "未填写描述")}</div>
                   </div>
                   <div class="prompt-card">
                     <div class="module-header">
                       <strong>Tags</strong>
                       <button class="mini-button" data-copy-seo="tags" type="button">Copy</button>
                     </div>
-                    <div class="preview-box">${seo.tags?.join(", ") || "未填写标签"}</div>
+                    <div class="preview-box">${escapeHtml(seo.tags?.join(", ") || "未填写标签")}</div>
                   </div>
                 </div>
               `

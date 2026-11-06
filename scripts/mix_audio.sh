@@ -33,7 +33,7 @@ done
 BGM="$(find assets/bgm/ -type f \( -name "*.mp3" -o -name "*.wav" -o -name "*.aac" -o -name "*.m4a" \) | head -1 || true)"
 
 if [ -z "$VOICEOVER" ] && [ -z "$BGM" ]; then
-    echo "⚠️  没有找到音频文件，跳过混音"
+    echo "⚠️  没有找到旁白或 BGM，保留视频原音"
     cp "$VIDEO_INPUT" "$OUTPUT"
     exit 0
 fi
@@ -41,11 +41,11 @@ fi
 echo "🎵 混合音频..."
 
 if [ -n "$VOICEOVER" ] && [ -n "$BGM" ]; then
-    ffmpeg -y -i "$VIDEO_INPUT" -i "$VOICEOVER" -i "$BGM" \
-        -filter_complex "[1:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0[vo]; \
+    ffmpeg -y -i "$VIDEO_INPUT" -i "$VOICEOVER" -stream_loop -1 -i "$BGM" \
+        -filter_complex "[1:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=1.0,apad,asplit=2[vo_mix][vo_sidechain]; \
                          [2:a]aformat=sample_fmts=fltp:sample_rates=44100:channel_layouts=stereo,volume=0.3[bgm_raw]; \
-                         [bgm_raw][vo]sidechaincompress=threshold=0.02:ratio=8:attack=200:release=1000[bgm_ducked]; \
-                         [vo][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
+                         [bgm_raw][vo_sidechain]sidechaincompress=threshold=0.02:ratio=8:attack=200:release=1000[bgm_ducked]; \
+                         [vo_mix][bgm_ducked]amix=inputs=2:duration=first:dropout_transition=2[aout]" \
         -map 0:v -map "[aout]" \
         -c:v copy -c:a aac -b:a 192k \
         -shortest \
@@ -54,6 +54,7 @@ if [ -n "$VOICEOVER" ] && [ -n "$BGM" ]; then
 elif [ -n "$VOICEOVER" ]; then
     ffmpeg -y -i "$VIDEO_INPUT" -i "$VOICEOVER" \
         -map 0:v -map 1:a \
+        -af apad \
         -c:v copy -c:a aac -b:a 192k \
         -shortest \
         "$OUTPUT" \

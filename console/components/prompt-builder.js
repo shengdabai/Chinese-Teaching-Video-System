@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   function buildPrompt(shot, characterBlock, platform) {
     const action = shot.character_action || "performing the required teaching action";
     const environment = shot.environment || "a clean teaching environment";
@@ -17,10 +18,10 @@
     return `
       <div class="prompt-card">
         <div class="module-header">
-          <strong>${title}</strong>
+          <strong>${escapeHtml(title)}</strong>
           <button class="mini-button" data-copy-prompt="${encodeURIComponent(prompt)}" type="button">Copy</button>
         </div>
-        <div class="code-box"><pre>${prompt}</pre></div>
+        <div class="code-box"><pre>${escapeHtml(prompt)}</pre></div>
       </div>
     `;
   }
@@ -42,7 +43,7 @@
 
           <div class="field-group">
             <label for="character-block">Character Identity Block</label>
-            <textarea id="character-block" placeholder="粘贴 config/character_sheet.md 中的角色块">${characterBlock}</textarea>
+            <textarea id="character-block" placeholder="粘贴 config/character_sheet.md 中的角色块">${escapeHtml(characterBlock)}</textarea>
           </div>
           <div class="button-row">
             <button id="save-character-block" class="secondary-button" type="button">Save Character Block</button>

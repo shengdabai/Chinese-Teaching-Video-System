@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   function totalDuration(shots) {
     return shots.reduce((sum, shot) => sum + Number(shot.duration_seconds || 0), 0);
   }
@@ -11,7 +12,7 @@
         return `
           <div class="timeline-item" data-shot-index="${index}">
             <div class="module-header">
-              <strong>Shot ${shot.shot_number} — ${shot.shot_name}</strong>
+              <strong>Shot ${escapeHtml(shot.shot_number)} — ${escapeHtml(shot.shot_name)}</strong>
               <div class="drag-buttons">
                 <button class="mini-button" data-move="up" data-shot-index="${index}" type="button">↑</button>
                 <button class="mini-button" data-move="down" data-shot-index="${index}" type="button">↓</button>
@@ -20,7 +21,7 @@
             <div class="timeline-bar">
               <div class="timeline-fill" style="width: ${width}%"></div>
             </div>
-            <p class="muted">${shot.duration_seconds}s · ${shot.generation_platform} · ${shot.camera}</p>
+            <p class="muted">${escapeHtml(shot.duration_seconds)}s · ${escapeHtml(shot.generation_platform)} · ${escapeHtml(shot.camera)}</p>
           </div>
         `;
       })
@@ -76,7 +77,7 @@ bash scripts/add_intro_outro.sh ${project.project_id}`;
                   </div>
                   <div class="stat-card">
                     <span class="muted">Target</span>
-                    <strong>${project.total_duration_target || 55}s</strong>
+                    <strong>${escapeHtml(project.total_duration_target || 55)}s</strong>
                   </div>
                   <div class="stat-card">
                     <span class="muted">Manifest Items</span>
@@ -93,12 +94,12 @@ bash scripts/add_intro_outro.sh ${project.project_id}`;
 
         <section class="panel">
           <h3>Command Preview</h3>
-          <div class="code-box"><pre>${project ? buildFfmpegCommand(project) : "暂无可生成命令"}</pre></div>
+          <div class="code-box"><pre>${escapeHtml(project ? buildFfmpegCommand(project) : "暂无可生成命令")}</pre></div>
         </section>
 
         <section class="panel">
           <h3>Manifest Preview</h3>
-          <div class="code-box"><pre>${manifest ? JSON.stringify(manifest, null, 2) : "当前项目还没有导入 edit_manifest.json"}</pre></div>
+          <div class="code-box"><pre>${escapeHtml(manifest ? JSON.stringify(manifest, null, 2) : "当前项目还没有导入 edit_manifest.json")}</pre></div>
         </section>
       </div>
     `;
@@ -113,7 +114,7 @@ bash scripts/add_intro_outro.sh ${project.project_id}`;
           const parsed = JSON.parse(text);
           ctx.importManifestObject(parsed);
         } catch (error) {
-          window.alert("导入 edit_manifest.json 失败，请确认文件是有效 JSON。");
+          window.alert(`导入 edit_manifest.json 失败：${error.message}`);
         } finally {
           manifestImportInput.value = "";
         }
