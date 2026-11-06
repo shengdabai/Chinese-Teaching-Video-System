@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   function buildScriptExport(project) {
     return {
       project_id: project.project_id,
@@ -29,7 +30,7 @@
         <label for="project-picker">选择项目</label>
         <select id="project-picker">
           ${ids
-            .map((id) => `<option value="${id}" ${id === currentId ? "selected" : ""}>${id}</option>`)
+            .map((id) => `<option value="${escapeHtml(id)}" ${id === currentId ? "selected" : ""}>${escapeHtml(id)}</option>`)
             .join("")}
         </select>
       </div>
@@ -38,30 +39,30 @@
 
   function renderShotCard(shot) {
     return `
-      <article class="shot-card" data-shot-number="${shot.shot_number}">
+      <article class="shot-card" data-shot-number="${escapeHtml(shot.shot_number)}">
         <div class="shot-head">
           <div>
-            <strong>Shot ${shot.shot_number} — ${shot.shot_name}</strong>
-            <div class="shot-meta">${shot.duration_seconds}s · ${shot.generation_platform} · ${shot.camera || "camera TBD"}</div>
+            <strong>Shot ${escapeHtml(shot.shot_number)} — ${escapeHtml(shot.shot_name)}</strong>
+            <div class="shot-meta">${escapeHtml(shot.duration_seconds)}s · ${escapeHtml(shot.generation_platform)} · ${escapeHtml(shot.camera || "camera TBD")}</div>
           </div>
-          <span class="project-pill">${shot.status || "Pending"}</span>
+          <span class="project-pill">${escapeHtml(shot.status || "Pending")}</span>
         </div>
         <div class="grid-2">
           <div class="field-group">
             <label>旁白文本（英文）</label>
-            <textarea data-field="voiceover_text_en">${shot.voiceover_text_en || ""}</textarea>
+            <textarea data-field="voiceover_text_en">${escapeHtml(shot.voiceover_text_en || "")}</textarea>
           </div>
           <div class="field-group">
             <label>旁白文本（中文）</label>
-            <textarea data-field="voiceover_text_cn">${shot.voiceover_text_cn || ""}</textarea>
+            <textarea data-field="voiceover_text_cn">${escapeHtml(shot.voiceover_text_cn || "")}</textarea>
           </div>
           <div class="field-group">
             <label>角色动作</label>
-            <input data-field="character_action" value="${shot.character_action || ""}" />
+            <input data-field="character_action" value="${escapeHtml(shot.character_action || "")}" />
           </div>
           <div class="field-group">
             <label>环境</label>
-            <input data-field="environment" value="${shot.environment || ""}" />
+            <input data-field="environment" value="${escapeHtml(shot.environment || "")}" />
           </div>
         </div>
       </article>
@@ -86,7 +87,7 @@
               ${renderProjectPicker(ctx.state.projects, ctx.state.currentProjectId)}
               <div class="field-group" style="margin-top: 14px;">
                 <label for="manual-project-id">手动输入项目 ID</label>
-                <input id="manual-project-id" placeholder="输入已存在的 project_id" value="${ctx.state.currentProjectId || ""}" />
+                <input id="manual-project-id" placeholder="输入已存在的 project_id" value="${escapeHtml(ctx.state.currentProjectId || "")}" />
               </div>
               <button id="switch-project-manual" class="secondary-button" type="button" style="margin-top: 12px;">Switch Project</button>
               <div class="field-group" style="margin-top: 16px;">
@@ -98,9 +99,9 @@
             <div class="panel compact">
               <h3>Metadata</h3>
               <div class="list-grid">
-                <div class="project-pill">Template: ${current?.template_type || "none"}</div>
-                <div class="project-pill">Audience: ${current?.target_audience || "none"}</div>
-                <div class="project-pill">Series: ${current?.series_tag || "none"}</div>
+                <div class="project-pill">Template: ${escapeHtml(current?.template_type || "none")}</div>
+                <div class="project-pill">Audience: ${escapeHtml(current?.target_audience || "none")}</div>
+                <div class="project-pill">Series: ${escapeHtml(current?.series_tag || "none")}</div>
                 <div class="project-pill">Import Ready: ${current ? "yes" : "waiting"}</div>
               </div>
             </div>
@@ -177,7 +178,7 @@
           const parsed = JSON.parse(text);
           ctx.importScriptObject(parsed);
         } catch (error) {
-          window.alert("导入 script.json 失败，请确认文件是有效 JSON。");
+          window.alert(`导入 script.json 失败：${error.message}`);
         } finally {
           importInput.value = "";
         }

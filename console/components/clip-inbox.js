@@ -1,4 +1,5 @@
 (function () {
+  const escapeHtml = (value) => window.ConsoleApp.escapeHtml(value);
   function renderKanbanColumns(project, statusOrder) {
     return statusOrder
       .map((status) => {
@@ -12,10 +13,10 @@
                     const missing = !shot.environment || !shot.character_action;
                     return `
                       <div class="kanban-card ${missing ? "missing" : ""}">
-                        <strong>Shot ${shot.shot_number}</strong>
-                        <div>${shot.shot_name}</div>
-                        <div class="muted">${shot.generation_platform} · ${shot.environment || "environment missing"}</div>
-                        <button class="mini-button" data-next-shot="${shot.shot_number}" type="button">Move to Next</button>
+                        <strong>Shot ${escapeHtml(shot.shot_number)}</strong>
+                        <div>${escapeHtml(shot.shot_name)}</div>
+                        <div class="muted">${escapeHtml(shot.generation_platform)} · ${escapeHtml(shot.environment || "environment missing")}</div>
+                        <button class="mini-button" data-next-shot="${escapeHtml(shot.shot_number)}" type="button">Move to Next</button>
                       </div>
                     `;
                   })
@@ -35,8 +36,8 @@
       .map((asset) => {
         return `
           <div class="asset-card ${asset.present ? "" : "missing"}">
-            <strong>${asset.name}</strong>
-            <p class="muted">${asset.category}</p>
+            <strong>${escapeHtml(asset.name)}</strong>
+            <p class="muted">${escapeHtml(asset.category)}</p>
             <p>${asset.present ? "已登记" : "缺失素材"}</p>
           </div>
         `;

@@ -1,81 +1,116 @@
-# chinese-teaching-video-system
+# AI Video Production Pipeline
 
-Open-source pipeline for AI Chinese-teaching shorts: browser console, prompt templates & FFmpeg automation. Built in public.
+Automated production system for creating Chinese teaching short videos (YouTube Shorts format).
 
-## Business Context
+## Features
 
-- **Category:** content automation product
-- **Audience:** creators and small teams that want repeatable publishing, research, or video-production workflows.
-- **Repository status:** Public repository. Keep examples, docs, and issues free of credentials, private data, and machine-specific paths.
-- **Topics:** ai-video, chinese-learning, content-automation, education, ffmpeg, prompt-engineering, web-console, youtube-shorts, automation, chinese-teaching, content-creation, shorts
-
-## What This Project Is For
-
-- Open-source pipeline for AI Chinese-teaching shorts: browser console, prompt templates & FFmpeg automation. Built in public.
-- Move content work from ad hoc drafting to an inspectable production pipeline.
-- Preserve human review while automating mechanical research, drafting, or publishing steps.
-
-## Where It Fits
-
-This repository turns content work into a repeatable workflow: inputs, processing steps, review points, and outputs are visible enough to audit and improve.
-
-## Technical Overview
-
-- **Primary language:** JavaScript
-- **Detected stack:** JavaScript, Node.js
-- **Default branch:** `main`
-- **Visibility:** `PUBLIC`
-- **License:** MIT License
-
-## Repository Map
-
-- `docs`
-- `scripts`
-- `assets`
-- `CLAUDE.md`
-- `LICENSE`
-- `PROJECT_SPEC.md`
-- `README.md`
-- `SECURITY.md`
-- `config`
-- `console`
-- `package-lock.json`
-- `package.json`
+- **Project Generation**: Python script creates standardized project structures from topic briefs
+- **FFmpeg Pipeline**: Full automation — normalize, auto-edit, burn subtitles, mix audio
+- **Web Console**: Browser-based project management with localStorage persistence
+- **Quality Check**: Automated validation of file integrity, video duration, resolution, and SEO
+- **Brand System**: Fixed character IP (panda teacher) with consistent visual identity
+- **SEO Package**: Auto-generated titles, descriptions, tags, and thumbnails
 
 ## Quick Start
 
-Use the commands that match the current project state:
+### 1. Generate a New Project
 
 ```bash
-npm install
+python3 scripts/generate_project.py
 ```
 
-| Command | Purpose |
-|---|---|
-| `npm install` | Install project dependencies. |
+Enter the Chinese and English topic at the prompts. An existing project with the
+same date and English topic is rejected without overwriting its files.
 
-## Operating Notes
+### 2. Open the Web Console
 
-- Keep real credentials out of the repository. Use local environment files, GitHub repository secrets, or the deployment platform secret manager.
-- If a `.env.example` file exists, treat it as documentation only; never commit filled-in `.env` files.
-- Before publishing screenshots, demos, or client examples, remove private names, internal paths, account IDs, and API endpoints.
-- The `Repository Hygiene` workflow is a lightweight guardrail, not a replacement for product-specific tests.
+```bash
+open console/index.html
+```
 
-## Delivery Checklist
+### 3. Run the Full Pipeline
 
-- [ ] README describes the user, business outcome, and operating boundary.
-- [ ] Setup or preview commands are current and do not rely on private machine state.
-- [ ] No real secrets, private user data, or machine-local state are tracked.
-- [ ] Screenshots, demos, or sample outputs are safe to share publicly when the repository is public.
-- [ ] Product-specific tests or smoke checks are documented before production use.
+```bash
+bash scripts/full_pipeline.sh YOUR_PROJECT
+```
 
-## Roadmap
+### 4. Quality Check
 
-- Tighten the fastest path from clone to useful demo.
-- Add project-specific screenshots, sample outputs, or a short walkthrough where useful.
-- Promote repeated manual steps into scripts, tests, or documented workflows.
-- Keep security, privacy, and licensing boundaries explicit as the project evolves.
+```bash
+python3 scripts/quality_check.py YOUR_PROJECT
+```
 
-## Maintainer Notes
+Run these commands from the repository root. Quality checking also accepts
+`projects/YOUR_PROJECT`; empty required files, invalid JSON, and unavailable or
+invalid video metadata fail the check.
 
-Maintained by [Tony Sheng](https://github.com/shengdabai). This README is written as a business-facing handoff: it should help a future collaborator, client, or reviewer understand why the repository exists, how to inspect it, and what must be true before it is reused or shipped.
+## Project Structure
+
+```
+├── config/             # Brand configuration and character sheets
+├── console/            # Web-based project management console
+├── docs/               # Guides and documentation
+├── projects/           # Generated video projects (10-file standard)
+├── scripts/            # Automation scripts (Python + Bash)
+└── templates/          # Templates for briefs, scripts, shotlists, etc.
+```
+
+## Each Project Contains
+
+| # | File | Purpose |
+|---|------|---------|
+| 01 | `01_brief.md` | Topic brief and teaching objectives |
+| 02 | `02_script.json` | Structured script with timing |
+| 03 | `03_shotlist.csv` | Shot-by-shot production list |
+| 04 | `04_character_sheet.md` | Character design reference |
+| 05 | `05_image_prompts.md` | AI image generation prompts |
+| 06 | `06_video_prompts.md` | AI video generation prompts |
+| 07 | `07_subtitles.srt` | Subtitle file with timestamps |
+| 08 | `08_voiceover.txt` | Voiceover script |
+| 09 | `09_seo_package.md` | YouTube SEO metadata |
+| 10 | `10_edit_manifest.json` | Final editing instructions |
+
+## Docker
+
+```bash
+docker build -t chinese-video-system .
+docker run chinese-video-system
+```
+
+## CI/CD
+
+GitHub Actions runs on every push:
+- Python test suite (pytest)
+- Bash syntax validation
+- File integrity checks
+
+Local regression checks (Python standard library; FFmpeg audio tests skip if
+FFmpeg or ffprobe is unavailable):
+
+```bash
+python3 -m unittest discover -s tests -p test_regressions.py -v
+python3 -m unittest discover -s tests -p test_audio_pipeline.py -v
+python3 -m unittest discover -s tests -p test_batch_generation.py -v
+python3 -m unittest discover -s tests -p test_edit_pipeline.py -v
+node --test tests/test_console_security.cjs
+```
+
+The original test suite requires an existing pytest installation:
+`python3 -m pytest tests/ -v`. There is no typecheck, lint, or build step for this
+plain JavaScript console. CI checks JavaScript and Bash syntax directly.
+
+Batch generation continues after a failed row and exits nonzero if any row
+failed. It preserves existing projects and accepts CRLF or an unterminated last row.
+The editor applies `start_trim` / `end_trim` as seconds in each source clip and
+rejects invalid or out-of-range trims. It builds the body only; the final stage
+adds optional brand clips once and supplies silence for clips without audio.
+Transition metadata is currently reported as a warning and rendered as hard cuts.
+Browser rendering and interaction checks must still run in a browser; the Node
+tests exercise the real HTML render functions with an in-memory DOM substitute.
+
+## Tech Stack
+
+- **Python 3**: Project generation and quality checking
+- **Bash + FFmpeg**: Video processing automation
+- **HTML/CSS/JS**: Web console (pure frontend, no dependencies)
+- **JSON/CSV/Markdown**: Data formats

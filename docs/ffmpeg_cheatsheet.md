@@ -54,12 +54,12 @@ ffmpeg -i video.mp4 -i voice.wav -i bgm.mp3 \
 
 ## 9. Sidechain ducking
 ```bash
-ffmpeg -i video.mp4 -i voice.wav -i bgm.mp3 \
-  -filter_complex "[1:a]volume=1.0[vo]; \
+ffmpeg -i video.mp4 -i voice.wav -stream_loop -1 -i bgm.mp3 \
+  -filter_complex "[1:a]volume=1.0,apad,asplit=2[vo_mix][vo_sidechain]; \
                    [2:a]volume=0.3[bgm]; \
-                   [bgm][vo]sidechaincompress=threshold=0.02:ratio=8:attack=200:release=1000[ducked]; \
-                   [vo][ducked]amix=inputs=2:duration=first[aout]" \
-  -map 0:v -map "[aout]" -c:v copy -c:a aac output.mp4
+                   [bgm][vo_sidechain]sidechaincompress=threshold=0.02:ratio=8:attack=200:release=1000[ducked]; \
+                   [vo_mix][ducked]amix=inputs=2:duration=first[aout]" \
+  -map 0:v -map "[aout]" -c:v copy -c:a aac -shortest output.mp4
 ```
 
 ## 10. 添加片头片尾

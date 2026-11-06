@@ -5,6 +5,8 @@
 """
 
 import os
+import json
+import math
 import subprocess
 import sys
 
@@ -14,8 +16,9 @@ def main():
         print("❌ 用法: python scripts/quality_check.py <project_id>")
         sys.exit(1)
 
-    project_id = sys.argv[1]
-    project_dir = os.path.join("projects", project_id)
+    project_arg = os.path.normpath(sys.argv[1])
+    project_dir = project_arg if os.path.isdir(project_arg) else os.path.join("projects", project_arg)
+    project_id = os.path.basename(project_dir)
 
     if not os.path.isdir(project_dir):
         print(f"❌ 项目目录不存在: {project_dir}")
@@ -38,17 +41,30 @@ def main():
         "10_edit_manifest.json"
     ]
 
+    contents = {}
     for filename in required_files:
         filepath = os.path.join(project_dir, filename)
-        exists = os.path.exists(filepath)
-        checks.append(("文件完整性", filename, "PASS" if exists else "FAIL", "" if exists else "🔴"))
+        try:
+            with open(filepath, "r", encoding="utf-8") as handle:
+                content = handle.read()
+            valid = bool(content.strip())
+            contents[filename] = content
+        except (OSError, UnicodeError):
+            valid = False
+        checks.append(("文件完整性", filename, "PASS" if valid else "FAIL", "" if valid else "🔴"))
+        if valid and filename.endswith(".json"):
+            try:
+                if not isinstance(json.loads(content), dict):
+                    raise ValueError("项目 JSON 顶层必须为对象")
+                checks.append(("JSON格式", filename, "PASS", ""))
+            except ValueError:
+                checks.append(("JSON格式", f"{filename} 不是有效的 JSON 对象", "FAIL", "🔴"))
 
     todo_count = 0
     for filename in required_files:
         filepath = os.path.join(project_dir, filename)
-        if os.path.exists(filepath):
-            with open(filepath, "r", encoding="utf-8") as handle:
-                content = handle.read()
+        if filename in contents:
+            content = contents[filename]
             count = content.count("[TODO")
             if count > 0:
                 todo_count += count
@@ -63,39 +79,42 @@ def main():
                 ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", final_video],
                 capture_output=True,
                 text=True,
-                check=False
+                check=True,
+                timeout=30
             )
             duration = float(result.stdout.strip())
-            if duration > 60:
+            if not math.isfinite(duration) or duration <= 0:
+                checks.append(("视频时长", "时长必须为有限正数", "FAIL", "🔴"))
+            elif duration > 60:
                 checks.append(("视频时长", f"{duration:.1f}秒 (超过60秒!)", "FAIL", "🔴"))
             elif duration > 58:
                 checks.append(("视频时长", f"{duration:.1f}秒 (接近上限)", "WARN", "🟡"))
             else:
                 checks.append(("视频时长", f"{duration:.1f}秒", "PASS", ""))
-        except Exception:
-            checks.append(("视频时长", "无法检测", "WARN", "🟡"))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            checks.append(("视频时长", "无法检测，请检查 ffprobe 和视频文件", "FAIL", "🔴"))
 
         try:
             result = subprocess.run(
                 ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", final_video],
                 capture_output=True,
                 text=True,
-                check=False
+                check=True,
+                timeout=30
             )
             dims = result.stdout.strip()
-            if "1080,1920" in dims or "1080x1920" in dims:
+            if dims in ("1080,1920", "1080x1920"):
                 checks.append(("分辨率", "1080x1920 ✓", "PASS", ""))
             else:
                 checks.append(("分辨率", f"{dims} (应为1080x1920)", "FAIL", "🔴"))
-        except Exception:
-            checks.append(("分辨率", "无法检测", "WARN", "🟡"))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            checks.append(("分辨率", "无法检测，请检查 ffprobe 和视频文件", "FAIL", "🔴"))
     else:
         checks.append(("最终视频", "文件不存在", "FAIL", "🔴"))
 
     seo_path = os.path.join(project_dir, "09_seo_package.md")
-    if os.path.exists(seo_path):
-        with open(seo_path, "r", encoding="utf-8") as handle:
-            seo_content = handle.read()
+    if "09_seo_package.md" in contents:
+        seo_content = contents["09_seo_package.md"]
         if "YouTube Title" in seo_content and "[TODO" not in seo_content:
             checks.append(("SEO就绪", "标题和描述已填写", "PASS", ""))
         else:
@@ -123,6 +142,8 @@ def main():
     else:
         print("✅ 所有检查通过！可以发布")
 
+    return 1 if fail_count > 0 else 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

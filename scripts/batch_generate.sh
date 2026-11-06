@@ -16,24 +16,31 @@ fi
 echo "📦 批量生成项目..."
 
 count=0
-while IFS='|' read -r topic_cn topic_en audience template style series seo; do
+failed=0
+while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    IFS='|' read -r topic_cn topic_en audience template style series seo <<< "$line"
     [ -z "$topic_cn" ] && continue
     [[ "$topic_cn" == \#* ]] && continue
 
     echo ""
     echo "━━━ 生成: $topic_cn / $topic_en ━━━"
 
-    printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
+    if printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n" \
         "$topic_cn" \
         "$topic_en" \
         "$audience" \
         "$template" \
         "$style" \
         "$series" \
-        "$seo" | python3 scripts/generate_project.py
-
-    count=$((count + 1))
+        "$seo" | python3 scripts/generate_project.py; then
+        count=$((count + 1))
+    else
+        failed=$((failed + 1))
+        echo "❌ 本行生成失败，继续处理后续主题: $topic_cn" >&2
+    fi
 done < "$TOPICS_FILE"
 
 echo ""
-echo "✅ 批量生成完成！共创建 $count 个项目"
+echo "📦 批量处理完成：成功 $count 个，失败 $failed 个"
+[ "$failed" -eq 0 ]
