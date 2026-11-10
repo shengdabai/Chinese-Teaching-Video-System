@@ -9,6 +9,8 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/project_guard.sh" "$PROJECT_ID"
+
 PROJECT_DIR="projects/$PROJECT_ID"
 mkdir -p "$PROJECT_DIR/logs"
 python3 - "$PROJECT_DIR" "$PROJECT_ID" <<'PY'

@@ -9,6 +9,8 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/project_guard.sh" "$PROJECT_ID"
+
 PROJECT_DIR="projects/$PROJECT_ID"
 OUTPUT_DIR="$PROJECT_DIR/output"
 LOG_DIR="$PROJECT_DIR/logs"

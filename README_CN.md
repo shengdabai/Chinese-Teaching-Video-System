@@ -65,7 +65,7 @@ chinese-teaching-video-system/
 
 ### 1. 进入项目目录
 ```bash
-cd /Users/adam/Desktop/chinese-teaching-video-system
+cd /path/to/Chinese-Teaching-Video-System
 ```
 
 ### 2. 创建一个新项目

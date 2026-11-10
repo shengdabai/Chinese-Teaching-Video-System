@@ -54,7 +54,24 @@
       if (!raw) {
         return { currentProjectId: "", projects: {} };
       }
-      return JSON.parse(raw);
+      const stored = JSON.parse(raw);
+      if (!stored || typeof stored !== "object" || Array.isArray(stored)
+          || !stored.projects || typeof stored.projects !== "object" || Array.isArray(stored.projects)) {
+        throw new Error("Invalid saved state.");
+      }
+      const projects = {};
+      for (const [id, project] of Object.entries(stored.projects)) {
+        try {
+          validateProjectId(id);
+          if (project?.project_id !== id) throw new Error("Project ID mismatch.");
+          projects[id] = ensureProjectShape(project);
+        } catch (error) {
+          // Keep valid projects available without overwriting the saved data.
+        }
+      }
+      const currentProjectId = typeof stored.currentProjectId === "string"
+        && Object.hasOwn(projects, stored.currentProjectId) ? stored.currentProjectId : "";
+      return { currentProjectId, projects };
     } catch (error) {
       return { currentProjectId: "", projects: {} };
     }
@@ -92,9 +109,14 @@
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       throw new Error("Import must be a JSON object.");
     }
-    if (value.shots !== undefined && (!Array.isArray(value.shots)
-        || value.shots.some((shot) => !shot || typeof shot !== "object" || Array.isArray(shot)))) {
-      throw new Error("shots must contain objects.");
+    for (const field of ["shots", "timeline", "checklist", "publishCalendar", "assetLibrary"]) {
+      if (value[field] !== undefined && (!Array.isArray(value[field])
+          || value[field].some((item) => !item || typeof item !== "object" || Array.isArray(item)))) {
+        throw new Error(`${field} must contain objects.`);
+      }
+    }
+    if (value.seo != null && (typeof value.seo !== "object" || Array.isArray(value.seo))) {
+      throw new Error("seo must be an object.");
     }
     if (value.seo?.tags !== undefined && !Array.isArray(value.seo.tags)) {
       throw new Error("seo.tags must be an array.");
@@ -217,7 +239,9 @@
         .map((item, index) => ({
           shot_number: item.shot_number || index + 1,
           shot_name: `Shot ${item.shot_number || index + 1}`,
-          duration_seconds: Number(item.end_trim || item.duration || 0),
+          duration_seconds: item.end_trim !== undefined
+            ? Number(item.end_trim) - Number(item.start_trim || 0)
+            : Number(item.duration || 0),
           voiceover_text_en: "",
           voiceover_text_cn: "",
           character_action: "",
