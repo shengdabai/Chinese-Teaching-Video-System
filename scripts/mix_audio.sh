@@ -10,6 +10,8 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/project_guard.sh" "$PROJECT_ID"
+
 PROJECT_DIR="projects/$PROJECT_ID"
 VIDEO_INPUT="$PROJECT_DIR/output/rough_cut_subtitled.mp4"
 OUTPUT="$PROJECT_DIR/output/rough_cut_with_audio.mp4"

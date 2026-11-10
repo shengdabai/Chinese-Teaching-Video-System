@@ -10,6 +10,8 @@ if [ -z "$PROJECT_ID" ]; then
     exit 1
 fi
 
+source "$(dirname "${BASH_SOURCE[0]}")/project_guard.sh" "$PROJECT_ID"
+
 echo "🐼 ═══════════════════════════════════════════"
 echo "   AI中文教学视频 — 一键生产流水线"
 echo "   项目: $PROJECT_ID"

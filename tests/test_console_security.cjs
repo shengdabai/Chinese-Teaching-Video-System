@@ -19,10 +19,10 @@ function element() {
   };
 }
 
-function consoleApp() {
+function consoleApp(rawState = null) {
   const mounts = new Map();
   const context = vm.createContext({
-    localStorage: { getItem() { return null; }, setItem() {} },
+    localStorage: { getItem() { return rawState; }, setItem() {} },
     document: { querySelectorAll() { return []; }, getElementById(id) {
       if (!mounts.has(id)) mounts.set(id, element());
       return mounts.get(id);
@@ -52,6 +52,57 @@ const fixture = {
   publishCalendar: [{ date: payload, status: payload }],
   assetLibrary: [{ name: payload, category: payload, present: true }]
 };
+
+test('restored projects are validated before commands and HTML are rendered', () => {
+  const raw = JSON.stringify({ currentProjectId: 'unsafe', projects: {
+    safe_demo: fixture,
+    unsafe: { project_id: 'demo; touch marker', shots: [] },
+    broken: { project_id: 'broken', checklist: [null] },
+    mismatch: { project_id: 'different', shots: [] }
+  } });
+  const { context, mounts } = consoleApp(raw);
+  assert.deepEqual(Object.keys(context.AppState.projects), ['safe_demo']);
+  assert.equal(context.AppState.currentProjectId, '');
+  context.ConsoleApp.setCurrentProject('safe_demo');
+  assert.ok(!mounts.get('view-auto-editor').innerHTML.includes('touch marker'));
+  assert.ok(!mounts.get('view-topic-intake').innerHTML.includes('<img src=x'));
+});
+
+test('invalid saved state cannot prevent console startup', () => {
+  for (const raw of ['null', '[]', '{}', '{bad', '{"projects":null}',
+    '{"projects":[]}', '{"projects":{"constructor":{"project_id":"constructor"}}}']) {
+    const { context } = consoleApp(raw);
+    assert.deepEqual(Object.keys(context.AppState.projects), []);
+    assert.equal(context.AppState.currentProjectId, '');
+  }
+  const { context } = consoleApp(JSON.stringify({
+    currentProjectId: 'safe_demo', projects: { safe_demo: { project_id: 'safe_demo' } }
+  }));
+  assert.equal(context.AppState.currentProjectId, 'safe_demo');
+  assert.equal(context.AppState.projects.safe_demo.shots.length, 0);
+});
+
+test('malformed nested imports are rejected before changing state', () => {
+  const { context } = consoleApp();
+  context.ConsoleApp.upsertProject({ project_id: 'safe_demo' });
+  for (const patch of [{ seo: 'invalid' }, { seo: [] }, { timeline: [null] },
+    { timeline: {} }, { checklist: [null] }, { publishCalendar: [false] },
+    { assetLibrary: ['invalid'] }]) {
+    assert.throws(() => context.ConsoleApp.importManifestObject({ project_id: 'safe_demo', ...patch }));
+    assert.equal(context.AppState.projects.safe_demo.edit_manifest, null);
+    assert.equal(context.AppState.currentProjectId, 'safe_demo');
+  }
+});
+
+test('manifest import displays retained duration instead of end timestamp', () => {
+  const { context } = consoleApp();
+  context.ConsoleApp.importManifestObject({ project_id: 'safe_demo', timeline: [
+    { type: 'shot', start_trim: 3, end_trim: 5 },
+    { type: 'shot', start_trim: 1, duration: 4 }
+  ] });
+  assert.equal(context.AppState.projects.safe_demo.shots[0].duration_seconds, 2);
+  assert.equal(context.AppState.projects.safe_demo.shots[1].duration_seconds, 4);
+});
 
 for (const name of ['topic-intake', 'script-engine', 'prompt-builder', 'clip-inbox', 'auto-editor', 'publish-dashboard']) {
   test(`${name}: imported text stays text in HTML, attributes and textareas`, () => {

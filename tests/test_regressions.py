@@ -52,6 +52,14 @@ class GenerationTests(WorkspaceTest):
         self.assertRegex(project.name, r'^\d{8}_food_drink_hello$')
         self.assertTrue((project / '10_edit_manifest.json').is_file())
 
+    def test_symlinked_projects_root_is_rejected_before_writing(self):
+        outside = Path('outside')
+        outside.mkdir()
+        Path('projects').symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(SystemExit):
+            self.generate()
+        self.assertEqual(list(outside.iterdir()), [])
+
     def test_empty_topic_is_rejected_before_writing(self):
         with self.assertRaises(SystemExit):
             self.generate('')

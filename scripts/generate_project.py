@@ -44,6 +44,8 @@ def main():
     project_id = f"{date_str}_{topic_slug}"
 
     project_dir = os.path.join("projects", project_id)
+    if os.path.islink("projects"):
+        raise SystemExit("❌ projects 目录不能是符号链接，未写入任何文件")
     try:
         os.makedirs(project_dir, exist_ok=False)
     except FileExistsError:
